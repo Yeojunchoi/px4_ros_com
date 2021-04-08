@@ -43,6 +43,7 @@
 #include <px4_msgs/msg/timesync.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
+#include <px4_msgs/msg/navigator_mission_item.hpp>
 #include <px4_msgs/msg/timesync.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -63,11 +64,13 @@ public:
 		    this->create_publisher<PositionSetpointTriplet>("PositionSetpointTriplet_PubSubTopic", 10);
 		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>("VehicleCommand_PubSubTopic", 10);
 #else
-		offboard_control_mode_publisher_ =
-		    this->create_publisher<OffboardControlMode>("OffboardControlMode_PubSubTopic");
-		position_setpoint_triplet_publisher_ =
-		    this->create_publisher<PositionSetpointTriplet>("PositionSetpointTriplet_PubSubTopic");
+		//offboard_control_mode_publisher_ =
+		//  this->create_publisher<OffboardControlMode>("OffboardControlMode_PubSubTopic");
+		//position_setpoint_triplet_publisher_ =
+		//    this->create_publisher<PositionSetpointTriplet>("PositionSetpointTriplet_PubSubTopic");
 		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>("VehicleCommand_PubSubTopic");
+		mission_item_publisher_ =
+		    this->create_publisher<NavigatorMissionItem>("NavigatorMissionItem_PubSubTopic");
 #endif
 
 		// get common timestamp
@@ -89,15 +92,18 @@ public:
 			}
 
             // offboard_control_mode needs to be paired with position_setpoint_triplet
-			publish_offboard_control_mode();
-			publish_position_setpoint_triplet();
+			//publish_offboard_control_mode();
+			//publish_position_setpoint_triplet();
+			uint32_t command =16; 
+			this->publish_vehicle_command(command,0.0,0.0);
+			//this->publish_mission_item();
 
             // stop the counter after reaching 100
 			if (offboard_setpoint_counter_ < 101) {
 				offboard_setpoint_counter_++;
 			}
 		};
-		timer_ = this->create_wall_timer(10ms, timer_callback);
+		timer_ = this->create_wall_timer(1s, timer_callback);
 	}
 
 	void arm() const;
@@ -109,15 +115,19 @@ private:
 	rclcpp::Publisher<OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
 	rclcpp::Publisher<PositionSetpointTriplet>::SharedPtr position_setpoint_triplet_publisher_;
 	rclcpp::Publisher<VehicleCommand>::SharedPtr vehicle_command_publisher_;
+	rclcpp::Publisher<NavigatorMissionItem>::SharedPtr mission_item_publisher_;
+
 	rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
 
 	std::atomic<unsigned long long> timestamp_;   //!< common synced timestamped
 
 	uint64_t offboard_setpoint_counter_;   //!< counter for the number of setpoints sent
 
+
+	void publish_mission_item() const;
 	void publish_offboard_control_mode() const;
 	void publish_position_setpoint_triplet() const;
-	void publish_vehicle_command(uint16_t command, float param1 = 0.0,
+	void publish_vehicle_command(uint32_t command, float param1 = 0.0,
 				     float param2 = 0.0) const;
 };
 
@@ -145,7 +155,7 @@ void OffboardControl::disarm() const {
  */
 void OffboardControl::publish_offboard_control_mode() const {
 	OffboardControlMode msg{};
-	msg.timestamp = timestamp_.load();
+	/*msg.timestamp = timestamp_.load();
 	msg.ignore_thrust = true;
 	msg.ignore_attitude = true;
 	msg.ignore_bodyrate_x = true;
@@ -155,7 +165,7 @@ void OffboardControl::publish_offboard_control_mode() const {
 	msg.ignore_velocity = true;
 	msg.ignore_acceleration_force = true;
 	msg.ignore_alt_hold = true;
-
+	*/
 	offboard_control_mode_publisher_->publish(msg);
 }
 
@@ -166,6 +176,7 @@ void OffboardControl::publish_offboard_control_mode() const {
  */
 void OffboardControl::publish_position_setpoint_triplet() const {
 	PositionSetpointTriplet msg{};
+	/*
 	msg.timestamp = timestamp_.load();
 	msg.current.timestamp = timestamp_.load();
 	msg.current.type = PositionSetpoint::SETPOINT_TYPE_POSITION;
@@ -178,7 +189,7 @@ void OffboardControl::publish_position_setpoint_triplet() const {
 	msg.current.yaw_valid = true;
 	msg.current.alt_valid = true;
 	msg.current.valid = true;
-
+*/
 	position_setpoint_triplet_publisher_->publish(msg);
 }
 
@@ -188,21 +199,54 @@ void OffboardControl::publish_position_setpoint_triplet() const {
  * @param param1    Command parameter 1
  * @param param2    Command parameter 2
  */
-void OffboardControl::publish_vehicle_command(uint16_t command, float param1,
+void OffboardControl::publish_vehicle_command(uint32_t command, float param1,
 					      float param2) const {
 	VehicleCommand msg{};
 	msg.timestamp = timestamp_.load();
 	msg.param1 = param1;
 	msg.param2 = param2;
+	msg.param3 = 0.0;
+	msg.param4 = NAN;
+	msg.param5 = 47.397344;
+	msg.param6 = 8.546152;
+	msg.param7 = 50.0;
 	msg.command = command;
 	msg.target_system = 1;
 	msg.target_component = 1;
 	msg.source_system = 1;
 	msg.source_component = 1;
-	msg.from_external = true;
+	msg.from_external = false;
+	
 
 	vehicle_command_publisher_->publish(msg);
 }
+
+void OffboardControl::publish_mission_item() const
+{
+	NavigatorMissionItem msg{};
+	/*msg.timestamp = timestamp_.load();
+	msg.instance_count =0;
+	msg.sequence_current =0;
+	msg.nav_cmd=16; //takeoff
+	msg.latitude = 47.3973;
+	msg.longitude = 8.5461;
+	msg.time_inside=0.0;
+	msg.acceptance_radius=5.0;
+	msg.loiter_radius=0.0;
+	msg.yaw = 2.5;
+	msg.altitude =55.0;
+	msg.frame =3; 
+	msg.origin=0;
+	msg.loiter_exit_xtrack=false;
+	msg.force_heading=false;
+	msg.altitude_is_relative = true;
+	msg.autocontinue =true;
+	msg.vtol_back_transition=false;*/
+	
+	mission_item_publisher_->publish(msg);
+
+}
+
 
 int main(int argc, char* argv[]) {
 	std::cout << "Starting offboard control node..." << std::endl;

@@ -201,8 +201,10 @@ rtps:
     msg: VehicleGlobalPosition
   - id: 94
     msg: VehicleGpsPosition
+    send: true
   - id: 95
     msg: VehicleLandDetected
+    send: true
   - id: 96
     msg: VehicleLocalPosition
   - id: 97
@@ -219,6 +221,7 @@ rtps:
     msg: VehicleRoi
   - id: 102
     msg: VehicleStatus
+    send: true
   - id: 103
     msg: VehicleStatusFlags
   - id: 104
@@ -290,6 +293,7 @@ rtps:
     msg: SensorGyroFft
   - id: 137
     msg: NavigatorMissionItem
+    receive: true
   - id: 138
     msg: EstimatorOpticalFlowVel
   - id: 139
@@ -314,6 +318,7 @@ rtps:
     msg: MagWorkerData
   - id: 149
     msg: TakeoffStatus
+    send: true
   - id: 150
     msg: HeaterStatus
   - id: 151

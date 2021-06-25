@@ -57,13 +57,11 @@ using namespace px4_msgs::msg;
 class OffboardControl : public rclcpp::Node {
 public:
 	OffboardControl() : Node("offboard_control") {
-#ifdef ROS_DEFAULT_API
 		offboard_control_mode_publisher_ =
 		    this->create_publisher<OffboardControlMode>("OffboardControlMode_PubSubTopic", 10);
 		position_setpoint_triplet_publisher_ =
 		    this->create_publisher<PositionSetpointTriplet>("PositionSetpointTriplet_PubSubTopic", 10);
 		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>("VehicleCommand_PubSubTopic", 10);
-#else
 		//offboard_control_mode_publisher_ =
 		//  this->create_publisher<OffboardControlMode>("OffboardControlMode_PubSubTopic");
 		//position_setpoint_triplet_publisher_ =
@@ -71,7 +69,7 @@ public:
 		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>("VehicleCommand_PubSubTopic");
 		mission_item_publisher_ =
 		    this->create_publisher<NavigatorMissionItem>("NavigatorMissionItem_PubSubTopic");
-#endif
+
 
 		// get common timestamp
         timesync_sub_ = this->create_subscription<px4_msgs::msg::Timesync>("Timesync_PubSubTopic",

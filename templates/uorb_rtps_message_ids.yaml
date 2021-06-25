@@ -217,6 +217,7 @@ rtps:
     send: true
   - id: 100
     msg: VehicleRatesSetpoint
+    receive : true
   - id: 101
     msg: VehicleRoi
   - id: 102
